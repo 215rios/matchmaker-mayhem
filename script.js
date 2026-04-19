@@ -345,7 +345,7 @@ function calculateCompatibility(person1, partner) {
   const sharedTraitPoints = sharedTraits.reduce((total, trait) => total + (traitWeights[trait] || 10), 0);
   const desiredMatchPoints = desiredMatches.reduce((total, trait) => total + (traitWeights[trait] || 10) + 4, 0);
   const stylePoints = person1.style === partner.style ? 14 : 0;
-  const rolePoints = person1.role !== partner.role ? 8 : 0;
+  const rolePoints = person1.role !== partner.role ? 8 : 8;
   const preferenceBonus = calculatePreferenceBonus(partner, person1.weddingPreferences);
   const chemistryFactor = randomNumber(-6, 8);
 
