@@ -21,6 +21,8 @@ The interface uses a dating-sim-inspired pastel palette:
 - Emoji partner portrait cards using short personality blurbs instead of visible trait lists
 - Hidden trait-based compatibility logic preserved behind the scenes
 - Wedding preference system with cake, music, and invitation selections
+- Three lightweight wedding minigames that run before the final result
+- Random NPC event system that can help or hurt the final outcome
 - Weighted compatibility scoring with chemistry randomness and wedding preference bonuses
 - Matchmaking animation screen with rotating status messages before results appear
 - Result screen with score breakdown, wedding outcome variations, and replay support
@@ -44,6 +46,30 @@ Only one slide is visible at a time. State is preserved while moving between sli
   - Cake match: `+3`
   - Music match: `+4`
   - Invitation match: `+2`
+- A shared `bonusScore` value is added through wedding minigames and one random NPC event before the final score is calculated
+
+## Wedding Gameplay System
+- After the matchmaking step begins, the game runs three quick wedding-themed minigames before showing the result
+- Cake Timing:
+  - Perfect: `+10`
+  - Good: `+5`
+  - Miss: `-5`
+- Bouquet Catch:
+  - Success: `+6`
+  - Miss: `0`
+- Dance Floor Hype:
+  - High energy: `+8`
+  - Medium: `+4`
+  - Low: `0`
+- Each minigame displays its feedback in a popup and contributes to the shared `bonusScore`
+
+## Random NPC Event System
+- One random NPC event triggers after the minigames and before the final result
+- Isabella (Wedding Planner) can boost the celebration with a strong positive bonus
+- Your Family can create a warm positive crowd effect
+- Andrew (Friend) can create an awkward negative moment
+- DJ Marvin can swing positive or negative depending on the event roll
+- The NPC event also appears in the popup flow and modifies `bonusScore`
 
 ## Play Again Reset Behavior
 - The `Play Again` button appears only after a completed result
@@ -70,10 +96,11 @@ https://creativecommons.org/licenses/by/3.0/
 3. Move through the six wedding journey slides using `Next` and `Back`.
 4. Complete all required selections for Person 1, traits, partner choice, and wedding preferences.
 5. Click `Start Matchmaking` on the matchmaking slide.
-6. Review the result on the final slide, then use `Play Again` to start a new match flow.
+6. Watch the three wedding minigames and one random NPC event play out in sequence.
+7. Review the result on the final slide, then use `Play Again` to start a new match flow.
 
 ## File Structure
-- `index.html` - Six-slide wizard structure, audio element, navigation, result screen, and footer attribution
-- `styles.css` - Pastel theme system, slide layout, transitions, responsive styling, and animations
-- `script.js` - Slide state management, validation, partner rendering, compatibility scoring, matchmaking flow, replay reset logic, music controls, and result effects
-- `README.md` - Project overview, wizard flow, hidden matching logic, and music attribution
+- `index.html` - Six-slide wizard structure, audio element, navigation, result screen, gameplay popup, and footer attribution
+- `styles.css` - Pastel theme system, slide layout, transitions, gameplay popup styling, responsive styling, and animations
+- `script.js` - Slide state management, validation, partner rendering, minigames, NPC event flow, compatibility scoring, replay reset logic, music controls, and result effects
+- `README.md` - Project overview, wizard flow, gameplay systems, hidden matching logic, and music attribution

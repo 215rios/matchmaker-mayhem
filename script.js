@@ -114,6 +114,11 @@ const partnerListEl = document.getElementById("partner-list");
 const matchmakeBtn = document.getElementById("matchmake-btn");
 const overlayEl = document.getElementById("matchmaking-overlay");
 const matchmakingMessageEl = document.getElementById("matchmaking-message");
+const gameplayPopupEl = document.getElementById("gameplay-popup");
+const gameplayPopupKickerEl = document.getElementById("gameplay-popup-kicker");
+const gameplayPopupTitleEl = document.getElementById("gameplay-popup-title");
+const gameplayPopupMessageEl = document.getElementById("gameplay-popup-message");
+const gameplayPopupScoreEl = document.getElementById("gameplay-popup-score");
 const musicToggleBtn = document.getElementById("music-toggle");
 const playAgainBtn = document.getElementById("play-again-btn");
 const resultActionsEl = document.getElementById("result-actions");
@@ -137,6 +142,77 @@ let currentSlide = 0;
 let matchmakingIntervalId = null;
 let matchmakingTimeoutId = null;
 let musicHasStarted = false;
+let bonusScore = 0;
+
+const minigames = [
+  {
+    name: "Cake Timing",
+    kicker: "Minigame 1",
+    outcomes: [
+      { label: "Perfect", score: 10, message: "The cake lands on the table at the exact dreamy moment. Frosting destiny approved." },
+      { label: "Good", score: 5, message: "The cake reveal is charming, even if the timing is a little offbeat." },
+      { label: "Miss", score: -5, message: "The cake rollout wobbles and the room winces for one dramatic second." }
+    ],
+    weights: [0.32, 0.46, 0.22]
+  },
+  {
+    name: "Bouquet Catch",
+    kicker: "Minigame 2",
+    outcomes: [
+      { label: "Success", score: 6, message: "The bouquet arc is perfect and the crowd erupts in delighted cheers." },
+      { label: "Miss", score: 0, message: "The bouquet slips through the chaos and lands in decorative shrubbery." }
+    ],
+    weights: [0.58, 0.42]
+  },
+  {
+    name: "Dance Floor Hype",
+    kicker: "Minigame 3",
+    outcomes: [
+      { label: "High energy", score: 8, message: "The dance floor is glowing and even the shy guests are fully committed." },
+      { label: "Medium", score: 4, message: "The dance circle finds a cute rhythm and keeps the mood afloat." },
+      { label: "Low", score: 0, message: "The dance floor energy is gentle, polite, and a little sleepy." }
+    ],
+    weights: [0.34, 0.4, 0.26]
+  }
+];
+
+const npcEvents = [
+  {
+    npc: "Isabella",
+    kicker: "NPC Event",
+    title: "Isabella (Wedding Planner)",
+    score: 8,
+    message: "Isabella, your wedding planner, secures a huge discount that impresses the guests!"
+  },
+  {
+    npc: "Your Family",
+    kicker: "NPC Event",
+    title: "Your Family",
+    score: 6,
+    message: "Your family unexpectedly turns the reception into a warm, supportive celebration that boosts the mood."
+  },
+  {
+    npc: "Andrew",
+    kicker: "NPC Event",
+    title: "Andrew (Friend)",
+    score: -10,
+    message: "Your friend Andrew objects your wedding as a prank, creating an awkward moment."
+  },
+  {
+    npc: "DJ Marvin",
+    kicker: "NPC Event",
+    title: "DJ Marvin",
+    score: 5,
+    message: "DJ Marvin saves the room with a flawless transition and the guests instantly recover their sparkle."
+  },
+  {
+    npc: "DJ Marvin",
+    kicker: "NPC Event",
+    title: "DJ Marvin",
+    score: -6,
+    message: "DJ Marvin misreads the room with a chaotic remix and the crowd loses momentum for a while."
+  }
+];
 
 function setupTraitLimits(groupName) {
   const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
@@ -256,7 +332,7 @@ function calculateCompatibility(person1, partner) {
   const preferenceBonus = calculatePreferenceBonus(partner, person1.weddingPreferences);
   const chemistryFactor = randomNumber(-6, 8);
 
-  let score = 18 + sharedTraitPoints + desiredMatchPoints + stylePoints + rolePoints + preferenceBonus.bonus + chemistryFactor;
+  let score = 18 + sharedTraitPoints + desiredMatchPoints + stylePoints + rolePoints + preferenceBonus.bonus + chemistryFactor + bonusScore;
   score = Math.max(0, Math.min(score, 100));
 
   return {
@@ -273,7 +349,8 @@ function calculateCompatibility(person1, partner) {
       stylePoints,
       rolePoints,
       preferenceBonus: preferenceBonus.bonus,
-      chemistryFactor
+      chemistryFactor,
+      bonusScore
     }
   };
 }
@@ -358,6 +435,7 @@ function renderResult(details) {
           <span class="chip">Style ${styleMatched ? `+${breakdown.stylePoints}` : "+0"}</span>
           <span class="chip">Role +${breakdown.rolePoints}</span>
           <span class="chip">Wedding +${breakdown.preferenceBonus}</span>
+          <span class="chip">Minigames/NPC ${formatSignedScore(breakdown.bonusScore)}</span>
           <span class="chip">Chemistry ${chemistryLabel}</span>
         </div>
       </div>
@@ -367,6 +445,7 @@ function renderResult(details) {
           <span class="chip">Shared traits: ${sharedTraits.length ? sharedTraits.map(capitalize).join(", ") : "None"}</span>
           <span class="chip">Desired matches: ${desiredMatches.length ? desiredMatches.map(capitalize).join(", ") : "None"}</span>
           <span class="chip">${preferenceText}</span>
+          <span class="chip">Wedding gameplay total: ${formatSignedScore(breakdown.bonusScore)}</span>
           <span class="chip">Chemistry vibe: ${chemistryMood}</span>
         </div>
       </div>
@@ -428,6 +507,20 @@ function showMatchmakingOverlay() {
   }, 550);
 }
 
+function showGameplayPopup({ kicker, title, message, score }) {
+  gameplayPopupKickerEl.textContent = kicker;
+  gameplayPopupTitleEl.textContent = title;
+  gameplayPopupMessageEl.textContent = message;
+  gameplayPopupScoreEl.textContent = `${formatSignedScore(score)} bonus`;
+  gameplayPopupEl.classList.remove("hidden");
+  gameplayPopupEl.setAttribute("aria-hidden", "false");
+}
+
+function hideGameplayPopup() {
+  gameplayPopupEl.classList.add("hidden");
+  gameplayPopupEl.setAttribute("aria-hidden", "true");
+}
+
 function hideMatchmakingOverlay() {
   clearMatchmakingTimers();
   overlayEl.classList.add("hidden");
@@ -448,6 +541,10 @@ function clearMatchmakingTimers() {
   }
 }
 
+function formatSignedScore(value) {
+  return value >= 0 ? `+${value}` : `${value}`;
+}
+
 function setInteractionDisabled(isDisabled) {
   matchmakeBtn.disabled = isDisabled;
   musicToggleBtn.disabled = isDisabled;
@@ -460,6 +557,21 @@ function setInteractionDisabled(isDisabled) {
 
 function randomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pickWeightedOutcome(options, weights) {
+  const roll = Math.random();
+  let threshold = 0;
+
+  for (let index = 0; index < options.length; index += 1) {
+    threshold += weights[index];
+
+    if (roll <= threshold) {
+      return options[index];
+    }
+  }
+
+  return options[options.length - 1];
 }
 
 function capitalize(value) {
@@ -613,10 +725,12 @@ async function handleMatchmake() {
   showMatchmakingOverlay();
   await delay(randomNumber(1200, 1900));
 
+  hideMatchmakingOverlay();
+  await runWeddingGameplaySequence();
+
   const compatibility = calculateCompatibility(person1, partner);
   const outcome = getOutcome(compatibility.score);
 
-  hideMatchmakingOverlay();
   clearStatusMessage();
   goToSlide(5);
   renderResult({
@@ -635,6 +749,35 @@ function delay(ms) {
   });
 }
 
+async function runWeddingGameplaySequence() {
+  bonusScore = 0;
+
+  for (const minigame of minigames) {
+    const outcome = pickWeightedOutcome(minigame.outcomes, minigame.weights);
+    bonusScore += outcome.score;
+    showGameplayPopup({
+      kicker: minigame.kicker,
+      title: `${minigame.name}: ${outcome.label}`,
+      message: outcome.message,
+      score: outcome.score
+    });
+    await delay(randomNumber(1100, 1700));
+    hideGameplayPopup();
+    await delay(180);
+  }
+
+  const npcEvent = npcEvents[randomNumber(0, npcEvents.length - 1)];
+  bonusScore += npcEvent.score;
+  showGameplayPopup({
+    kicker: npcEvent.kicker,
+    title: npcEvent.title,
+    message: npcEvent.message,
+    score: npcEvent.score
+  });
+  await delay(randomNumber(1300, 1900));
+  hideGameplayPopup();
+}
+
 function togglePlayAgainButton(shouldShow) {
   resultActionsEl.classList.toggle("hidden", !shouldShow);
 }
@@ -647,8 +790,10 @@ function clearSelectedPartner() {
 
 function resetToNewMatch() {
   clearMatchmakingTimers();
+  bonusScore = 0;
   overlayEl.classList.add("hidden");
   overlayEl.setAttribute("aria-hidden", "true");
+  hideGameplayPopup();
   document.body.classList.remove("overlay-open");
   clearResultEffects();
   clearSelectedPartner();

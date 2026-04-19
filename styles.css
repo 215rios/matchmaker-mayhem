@@ -437,7 +437,9 @@ body.overlay-open {
   justify-items: start;
   padding: 18px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.6);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 250, 247, 0.9)),
+    linear-gradient(135deg, rgba(184, 224, 210, 0.18), rgba(205, 180, 219, 0.18));
   border: 1px solid rgba(138, 131, 159, 0.12);
 }
 
@@ -606,6 +608,10 @@ button:disabled,
   box-shadow: 0 12px 24px rgba(137, 176, 217, 0.2);
 }
 
+.play-again-button:hover {
+  box-shadow: 0 16px 28px rgba(137, 176, 217, 0.24);
+}
+
 .matchmaking-overlay {
   position: fixed;
   inset: 0;
@@ -619,6 +625,53 @@ button:disabled,
 
 .matchmaking-overlay.hidden {
   display: none;
+}
+
+.gameplay-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(76, 62, 92, 0.24);
+  backdrop-filter: blur(8px);
+}
+
+.gameplay-popup.hidden {
+  display: none;
+}
+
+.gameplay-popup-card {
+  width: min(460px, 100%);
+  padding: 28px 24px;
+  text-align: center;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 247, 0.96));
+  box-shadow: 0 28px 60px rgba(76, 62, 92, 0.2);
+  animation: slideDown 0.24s ease;
+}
+
+.gameplay-popup-card h2 {
+  margin: 8px 0 10px;
+}
+
+.gameplay-popup-card p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.popup-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 202, 212, 0.5), rgba(167, 199, 231, 0.42));
+  border: 1px solid rgba(138, 131, 159, 0.12);
+  font-weight: bold;
 }
 
 .matchmaking-card {
