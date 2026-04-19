@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matchmaker Mayhem</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <p class="eyebrow">Wedding Match Simulator</p>
+      <h1>Matchmaker Mayhem</h1>
+      <p class="subtitle">Find love... or total chaos.</p>
+    </header>
+
+    <section class="panel instructions">
+      <h2>How to Play</h2>
+      <p>Create Person 1, pick what they want in a partner, choose Person 2's role, then select a partner and click <strong>Matchmake</strong> to reveal the wedding fate.</p>
+      <ul>
+        <li>Choose one role and one style for Person 1.</li>
+        <li>Select up to 2 personality traits for Person 1.</li>
+        <li>Select up to 2 desired traits for Person 2.</li>
+        <li>Pick a role for Person 2 to filter the available partners.</li>
+      </ul>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Person 1 Customization</h2>
+
+        <div class="field-group">
+          <h3>Role</h3>
+          <div class="choice-row" id="person1-role">
+            <label><input type="radio" name="person1-role" value="Bride" checked> Bride</label>
+            <label><input type="radio" name="person1-role" value="Groom"> Groom</label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <h3>Style</h3>
+          <div class="choice-grid" id="person1-style">
+            <label><input type="radio" name="person1-style" value="classic" checked> Classic</label>
+            <label><input type="radio" name="person1-style" value="modern"> Modern</label>
+            <label><input type="radio" name="person1-style" value="bold"> Bold</label>
+            <label><input type="radio" name="person1-style" value="elegant"> Elegant</label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <h3>Personality Traits <span>(choose up to 2)</span></h3>
+          <div class="choice-grid" id="person1-traits">
+            <label><input type="checkbox" name="person1-traits" value="romantic"> Romantic</label>
+            <label><input type="checkbox" name="person1-traits" value="adventurous"> Adventurous</label>
+            <label><input type="checkbox" name="person1-traits" value="shy"> Shy</label>
+            <label><input type="checkbox" name="person1-traits" value="dramatic"> Dramatic</label>
+            <label><input type="checkbox" name="person1-traits" value="organized"> Organized</label>
+            <label><input type="checkbox" name="person1-traits" value="spontaneous"> Spontaneous</label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <h3>Desired Partner Traits <span>(choose up to 2)</span></h3>
+          <div class="choice-grid" id="desired-traits">
+            <label><input type="checkbox" name="desired-traits" value="romantic"> Romantic</label>
+            <label><input type="checkbox" name="desired-traits" value="adventurous"> Adventurous</label>
+            <label><input type="checkbox" name="desired-traits" value="shy"> Shy</label>
+            <label><input type="checkbox" name="desired-traits" value="dramatic"> Dramatic</label>
+            <label><input type="checkbox" name="desired-traits" value="organized"> Organized</label>
+            <label><input type="checkbox" name="desired-traits" value="spontaneous"> Spontaneous</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Choose Person 2</h2>
+
+        <div class="field-group">
+          <h3>Partner Role</h3>
+          <div class="choice-row" id="partner-role">
+            <label><input type="radio" name="partner-role" value="Bride" checked> Bride</label>
+            <label><input type="radio" name="partner-role" value="Groom"> Groom</label>
+          </div>
+        </div>
+
+        <div class="partner-header">
+          <p>Select one of the available matches:</p>
+          <button id="matchmake-btn" type="button">Matchmake</button>
+        </div>
+
+        <div id="partner-list" class="partner-list" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <section class="panel result-panel">
+      <h2>Wedding Outcome</h2>
+      <div id="result" class="result empty">
+        <p>Your compatibility score and wedding story will appear here.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
