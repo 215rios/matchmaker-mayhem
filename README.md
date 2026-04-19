@@ -1,7 +1,10 @@
 # Matchmaker Mayhem
 
 ## Description
-Matchmaker Mayhem is a browser-based wedding matchmaking game built with vanilla HTML, CSS, and JavaScript. Players customize Person 1, define preferred partner traits, choose a fixed character for Person 2, and reveal a playful wedding result with animated feedback.
+Matchmaker Mayhem is a browser-based wedding matchmaking game built with vanilla HTML, CSS, and JavaScript. The experience now runs as a multi-step wedding journey wizard where players move through setup, hidden-logic matching, wedding planning, matchmaking, and a final result screen.
+
+## Play Online
+Click here to play in web browser: https://215rios.github.io/matchmaker-mayhem/
 
 ## Pastel Theme System
 The interface uses a dating-sim-inspired pastel palette:
@@ -12,14 +15,40 @@ The interface uses a dating-sim-inspired pastel palette:
 - Soft Denim: `#A7C7E7`, `#89B0D9`
 
 ## Features
-- Card-based pastel UI with improved spacing, hierarchy, hover states, and selected states
-- Emoji character portrait cards for the existing fixed characters
-- Styled Person 1 player card with trait summary, desired partner summary, and vibe emoji
+- Multi-slide wedding journey system with six state-driven steps
+- `Next` and `Back` navigation with validation before moving forward
+- Pastel card-page layout with progress bar and soft slide transitions
+- Emoji partner portrait cards using short personality blurbs instead of visible trait lists
+- Hidden trait-based compatibility logic preserved behind the scenes
+- Wedding preference system with cake, music, and invitation selections
+- Weighted compatibility scoring with chemistry randomness and wedding preference bonuses
 - Matchmaking animation screen with rotating status messages before results appear
-- Weighted compatibility scoring with a small chemistry factor for variation
-- Score breakdown cards and varied wedding outcome descriptions
-- Visual feedback effects including confetti, sparkle accents, and runaway-result shake
+- Result screen with score breakdown, wedding outcome variations, and replay support
 - Local background wedding music with a Play/Pause toggle and low default volume
+
+## Slide Flow
+1. Person 1 Setup
+2. Personality Traits
+3. Partner Selection
+4. Wedding Preferences
+5. Matchmaking
+6. Result Screen
+
+Only one slide is visible at a time. State is preserved while moving between slides.
+
+## Hidden Matching Logic
+- Partner cards show emoji, name, role, and a short descriptive blurb
+- Character trait arrays remain hidden from the player
+- Matching still uses the existing trait-based system internally
+- Wedding preferences add extra score modifiers:
+  - Cake match: `+3`
+  - Music match: `+4`
+  - Invitation match: `+2`
+
+## Play Again Reset Behavior
+- The `Play Again` button appears only after a completed result
+- Clicking it clears the selected partner, closes the overlay, removes confetti and active result effects, resets result content, and returns the wizard to Slide 1
+- Person 1 customization and wedding setup remain available in the same session unless the player changes them manually
 
 ## Music System
 - The app uses the local file `wedding_music.mp3`
@@ -38,13 +67,13 @@ https://creativecommons.org/licenses/by/3.0/
 ## How to Run
 1. Open the project folder.
 2. Open `index.html` in a modern web browser.
-3. Customize Person 1's role, style, vibe emoji, traits, and desired partner traits.
-4. Choose Person 2's role and select one of the fixed character cards.
-5. Optionally start the background music with the `Play Music` button.
-6. Click `Matchmake` to view the matchmaking animation and final result.
+3. Move through the six wedding journey slides using `Next` and `Back`.
+4. Complete all required selections for Person 1, traits, partner choice, and wedding preferences.
+5. Click `Start Matchmaking` on the matchmaking slide.
+6. Review the result on the final slide, then use `Play Again` to start a new match flow.
 
 ## File Structure
-- `index.html` - App structure, audio element, matchmaking overlay, and footer attribution
-- `styles.css` - Pastel theme system, card-based layout, responsive styling, and animations
-- `script.js` - Character rendering, compatibility scoring, matchmaking flow, music controls, and result effects
-- `README.md` - Project overview, feature summary, and music attribution
+- `index.html` - Six-slide wizard structure, audio element, navigation, result screen, and footer attribution
+- `styles.css` - Pastel theme system, slide layout, transitions, responsive styling, and animations
+- `script.js` - Slide state management, validation, partner rendering, compatibility scoring, matchmaking flow, replay reset logic, music controls, and result effects
+- `README.md` - Project overview, wizard flow, hidden matching logic, and music attribution

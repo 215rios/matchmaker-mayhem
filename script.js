@@ -24,6 +24,17 @@ const portraitMap = {
   Douglas: "✨"
 };
 
+const descriptionMap = {
+  Ava: "A sweet daydreamer who loves gentle moments and soft romance.",
+  Samantha: "A polished social star who treats every entrance like a scene-stealer.",
+  Carmen: "A fearless flirt with whirlwind energy and spontaneous plans.",
+  Felicity: "A graceful storybook soul who keeps every detail heartfelt.",
+  Justin: "A warmhearted charmer who wears his feelings right on his sleeve.",
+  Antonio: "A bold showstopper with magnetic confidence and big gestures.",
+  Felix: "A thoughtful introvert with cozy calm and dependable energy.",
+  Douglas: "A refined romantic with elegant taste and steady devotion."
+};
+
 const reactionMap = {
   Ava: "Soft sparkle",
   Samantha: "Grand entrance",
@@ -49,6 +60,23 @@ const traitWeights = {
   dramatic: 12,
   organized: 14,
   spontaneous: 15
+};
+
+const preferenceBonusValues = {
+  "cake-flavor": 3,
+  "music-type": 4,
+  "invitation-style": 2
+};
+
+const partnerPreferenceMap = {
+  Ava: { "cake-flavor": "strawberry", "music-type": "acoustic", "invitation-style": "floral" },
+  Samantha: { "cake-flavor": "red velvet", "music-type": "DJ", "invitation-style": "modern" },
+  Carmen: { "cake-flavor": "chocolate", "music-type": "live band", "invitation-style": "modern" },
+  Felicity: { "cake-flavor": "vanilla", "music-type": "orchestra", "invitation-style": "elegant" },
+  Justin: { "cake-flavor": "strawberry", "music-type": "acoustic", "invitation-style": "vintage" },
+  Antonio: { "cake-flavor": "red velvet", "music-type": "live band", "invitation-style": "modern" },
+  Felix: { "cake-flavor": "vanilla", "music-type": "orchestra", "invitation-style": "elegant" },
+  Douglas: { "cake-flavor": "chocolate", "music-type": "orchestra", "invitation-style": "vintage" }
 };
 
 const matchmakingMessages = [
@@ -80,22 +108,34 @@ const resultVariants = {
   ]
 };
 
+const slides = Array.from(document.querySelectorAll(".wizard-slide"));
 const resultEl = document.getElementById("result");
 const partnerListEl = document.getElementById("partner-list");
 const matchmakeBtn = document.getElementById("matchmake-btn");
 const overlayEl = document.getElementById("matchmaking-overlay");
 const matchmakingMessageEl = document.getElementById("matchmaking-message");
 const musicToggleBtn = document.getElementById("music-toggle");
+const playAgainBtn = document.getElementById("play-again-btn");
+const resultActionsEl = document.getElementById("result-actions");
+const statusMessageEl = document.getElementById("status-message");
 const weddingAudio = document.getElementById("wedding-audio");
 const playerAvatarEl = document.getElementById("player-avatar");
 const playerRoleStyleEl = document.getElementById("player-role-style");
 const playerTraitSummaryEl = document.getElementById("player-trait-summary");
 const desiredTraitSummaryEl = document.getElementById("desired-trait-summary");
+const weddingPreferenceSummaryEl = document.getElementById("wedding-preference-summary");
+const backBtn = document.getElementById("back-btn");
+const nextBtn = document.getElementById("next-btn");
+const progressLabelEl = document.getElementById("journey-progress");
+const progressFillEl = document.getElementById("progress-fill");
 
 const TRAIT_LIMIT = 2;
 const MUSIC_TARGET_VOLUME = 0.25;
+const TOTAL_SLIDES = slides.length;
 
+let currentSlide = 0;
 let matchmakingIntervalId = null;
+let matchmakingTimeoutId = null;
 let musicHasStarted = false;
 
 function setupTraitLimits(groupName) {
@@ -139,20 +179,25 @@ function updatePlayerCard() {
   const vibe = getSelectedRadioValue("player-vibe") || "💖";
   const traits = getSelectedCheckboxValues("person1-traits");
   const desiredTraits = getSelectedCheckboxValues("desired-traits");
+  const weddingChoices = collectWeddingPreferences();
 
   playerAvatarEl.textContent = vibe;
   playerRoleStyleEl.textContent = `${role} • ${capitalize(style)} style • ${styleDescriptions[style]}`;
   playerTraitSummaryEl.innerHTML = createChipMarkup(traits, "Choose traits");
   desiredTraitSummaryEl.innerHTML = createChipMarkup(desiredTraits, "Choose preferences");
+  weddingPreferenceSummaryEl.innerHTML = createChipMarkup(
+    Object.values(weddingChoices).filter(Boolean),
+    "Choose wedding details"
+  );
 }
 
-function renderPartners(role) {
+function renderPartners(role, selectedPartnerName = "") {
   const rolePartners = partners[role] || [];
 
   partnerListEl.innerHTML = rolePartners
-    .map((partner, index) => `
+    .map((partner) => `
       <label class="partner-card">
-        <input type="radio" name="selected-partner" value="${partner.name}" ${index === 0 ? "checked" : ""}>
+        <input type="radio" name="selected-partner" value="${partner.name}" ${selectedPartnerName === partner.name ? "checked" : ""}>
         <div class="card-content">
           <div class="portrait-row">
             <div class="portrait-emoji" aria-hidden="true">${portraitMap[partner.name] || "💘"}</div>
@@ -160,12 +205,45 @@ function renderPartners(role) {
           </div>
           <h3>${partner.name}</h3>
           <p class="meta">${partner.role}</p>
-          <p class="archetype">Traits: ${partner.traits.map(capitalize).join(", ")}</p>
-          <p class="style-line">Style: ${capitalize(partner.style)} • ${styleDescriptions[partner.style]}</p>
+          <p class="blurb">${descriptionMap[partner.name]}</p>
         </div>
       </label>
     `)
     .join("");
+}
+
+function collectWeddingPreferences() {
+  return {
+    cakeFlavor: getSelectedRadioValue("cake-flavor"),
+    musicType: getSelectedRadioValue("music-type"),
+    invitationStyle: getSelectedRadioValue("invitation-style")
+  };
+}
+
+function calculatePreferenceBonus(partner, preferences) {
+  const partnerPreferences = partnerPreferenceMap[partner.name] || {};
+  const matches = [];
+  let bonus = 0;
+
+  if (preferences.cakeFlavor && preferences.cakeFlavor === partnerPreferences["cake-flavor"]) {
+    bonus += preferenceBonusValues["cake-flavor"];
+    matches.push(`Cake +${preferenceBonusValues["cake-flavor"]}`);
+  }
+
+  if (preferences.musicType && preferences.musicType === partnerPreferences["music-type"]) {
+    bonus += preferenceBonusValues["music-type"];
+    matches.push(`Music +${preferenceBonusValues["music-type"]}`);
+  }
+
+  if (preferences.invitationStyle && preferences.invitationStyle === partnerPreferences["invitation-style"]) {
+    bonus += preferenceBonusValues["invitation-style"];
+    matches.push(`Invitation +${preferenceBonusValues["invitation-style"]}`);
+  }
+
+  return {
+    bonus,
+    matches
+  };
 }
 
 function calculateCompatibility(person1, partner) {
@@ -175,9 +253,10 @@ function calculateCompatibility(person1, partner) {
   const desiredMatchPoints = desiredMatches.reduce((total, trait) => total + (traitWeights[trait] || 10) + 4, 0);
   const stylePoints = person1.style === partner.style ? 14 : 0;
   const rolePoints = person1.role !== partner.role ? 8 : 0;
+  const preferenceBonus = calculatePreferenceBonus(partner, person1.weddingPreferences);
   const chemistryFactor = randomNumber(-6, 8);
 
-  let score = 18 + sharedTraitPoints + desiredMatchPoints + stylePoints + rolePoints + chemistryFactor;
+  let score = 18 + sharedTraitPoints + desiredMatchPoints + stylePoints + rolePoints + preferenceBonus.bonus + chemistryFactor;
   score = Math.max(0, Math.min(score, 100));
 
   return {
@@ -186,12 +265,14 @@ function calculateCompatibility(person1, partner) {
     desiredMatches,
     styleMatched: person1.style === partner.style,
     chemistryFactor,
+    preferenceMatches: preferenceBonus.matches,
     breakdown: {
       base: 18,
       sharedTraitPoints,
       desiredMatchPoints,
       stylePoints,
       rolePoints,
+      preferenceBonus: preferenceBonus.bonus,
       chemistryFactor
     }
   };
@@ -240,20 +321,21 @@ function getOutcomeVariation(outcomeKey) {
 
 function renderPlaceholder() {
   clearResultEffects();
+  clearStatusMessage();
+  togglePlayAgainButton(false);
   resultEl.className = "result empty";
   resultEl.innerHTML = "<p>Your compatibility score, chemistry notes, and wedding story will appear here.</p>";
 }
 
 function renderMessage(message, isError = false) {
-  clearResultEffects();
-  resultEl.className = `result ${isError ? "error" : ""}`;
-  resultEl.innerHTML = `<p>${message}</p>`;
+  showStatusMessage(message, isError);
 }
 
 function renderResult(details) {
-  const { score, sharedTraits, desiredMatches, styleMatched, chemistryFactor, partnerName, outcome, breakdown } = details;
+  const { score, sharedTraits, desiredMatches, styleMatched, chemistryFactor, partnerName, outcome, breakdown, preferenceMatches } = details;
   const chemistryLabel = chemistryFactor >= 0 ? `+${chemistryFactor}` : `${chemistryFactor}`;
   const chemistryMood = chemistryFactor >= 5 ? "Fireworks" : chemistryFactor >= 0 ? "Steady spark" : "Wobbly tension";
+  const preferenceText = preferenceMatches.length ? preferenceMatches.join(", ") : "No wedding preference bonus";
 
   clearResultEffects();
   resultEl.className = `result ${getResultClass(outcome.key)}`;
@@ -275,6 +357,7 @@ function renderResult(details) {
           <span class="chip">Desired +${breakdown.desiredMatchPoints}</span>
           <span class="chip">Style ${styleMatched ? `+${breakdown.stylePoints}` : "+0"}</span>
           <span class="chip">Role +${breakdown.rolePoints}</span>
+          <span class="chip">Wedding +${breakdown.preferenceBonus}</span>
           <span class="chip">Chemistry ${chemistryLabel}</span>
         </div>
       </div>
@@ -283,11 +366,13 @@ function renderResult(details) {
         <div class="chips">
           <span class="chip">Shared traits: ${sharedTraits.length ? sharedTraits.map(capitalize).join(", ") : "None"}</span>
           <span class="chip">Desired matches: ${desiredMatches.length ? desiredMatches.map(capitalize).join(", ") : "None"}</span>
+          <span class="chip">${preferenceText}</span>
           <span class="chip">Chemistry vibe: ${chemistryMood}</span>
         </div>
       </div>
     </div>
   `;
+  togglePlayAgainButton(true);
 
   if (score >= 80) {
     launchConfetti();
@@ -330,6 +415,7 @@ function launchConfetti() {
 function showMatchmakingOverlay() {
   let messageIndex = 0;
 
+  clearMatchmakingTimers();
   matchmakingMessageEl.textContent = matchmakingMessages[0];
   overlayEl.classList.remove("hidden");
   overlayEl.setAttribute("aria-hidden", "false");
@@ -343,16 +429,30 @@ function showMatchmakingOverlay() {
 }
 
 function hideMatchmakingOverlay() {
-  window.clearInterval(matchmakingIntervalId);
+  clearMatchmakingTimers();
   overlayEl.classList.add("hidden");
   overlayEl.setAttribute("aria-hidden", "true");
   document.body.classList.remove("overlay-open");
   setInteractionDisabled(false);
 }
 
+function clearMatchmakingTimers() {
+  if (matchmakingIntervalId) {
+    window.clearInterval(matchmakingIntervalId);
+    matchmakingIntervalId = null;
+  }
+
+  if (matchmakingTimeoutId) {
+    window.clearTimeout(matchmakingTimeoutId);
+    matchmakingTimeoutId = null;
+  }
+}
+
 function setInteractionDisabled(isDisabled) {
   matchmakeBtn.disabled = isDisabled;
   musicToggleBtn.disabled = isDisabled;
+  backBtn.disabled = isDisabled;
+  nextBtn.disabled = isDisabled;
   document.querySelectorAll("input").forEach((input) => {
     input.disabled = isDisabled;
   });
@@ -363,7 +463,10 @@ function randomNumber(min, max) {
 }
 
 function capitalize(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
+  return value
+    .split(" ")
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
 }
 
 function collectPerson1() {
@@ -372,8 +475,103 @@ function collectPerson1() {
     style: getSelectedRadioValue("person1-style"),
     vibe: getSelectedRadioValue("player-vibe"),
     traits: getSelectedCheckboxValues("person1-traits"),
-    desiredTraits: getSelectedCheckboxValues("desired-traits")
+    desiredTraits: getSelectedCheckboxValues("desired-traits"),
+    weddingPreferences: collectWeddingPreferences()
   };
+}
+
+function validateSlide(index) {
+  if (index === 1) {
+    if (!getSelectedRadioValue("person1-role") || !getSelectedRadioValue("person1-style") || !getSelectedRadioValue("player-vibe")) {
+      renderMessage("Complete the role, style, and vibe selections before continuing.", true);
+      return false;
+    }
+  }
+
+  if (index === 2) {
+    if (getSelectedCheckboxValues("person1-traits").length === 0) {
+      renderMessage("Choose at least 1 personality trait for Person 1 before continuing.", true);
+      return false;
+    }
+
+    if (getSelectedCheckboxValues("desired-traits").length === 0) {
+      renderMessage("Choose at least 1 desired partner trait before continuing.", true);
+      return false;
+    }
+  }
+
+  if (index === 3) {
+    if (!getSelectedRadioValue("selected-partner")) {
+      renderMessage("Select a partner before continuing.", true);
+      return false;
+    }
+  }
+
+  if (index === 4) {
+    const preferences = collectWeddingPreferences();
+
+    if (!preferences.cakeFlavor || !preferences.musicType || !preferences.invitationStyle) {
+      renderMessage("Choose a cake flavor, music type, and invitation style before continuing.", true);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function updateNavigation() {
+  progressLabelEl.textContent = `Step ${currentSlide + 1} of ${TOTAL_SLIDES}`;
+  progressFillEl.style.width = `${((currentSlide + 1) / TOTAL_SLIDES) * 100}%`;
+  backBtn.disabled = currentSlide === 0;
+
+  if (currentSlide >= TOTAL_SLIDES - 2) {
+    nextBtn.classList.add("hidden-nav");
+    nextBtn.style.visibility = "hidden";
+  } else {
+    nextBtn.classList.remove("hidden-nav");
+    nextBtn.style.visibility = "visible";
+    nextBtn.textContent = "Next";
+  }
+}
+
+function goToSlide(index) {
+  currentSlide = Math.max(0, Math.min(index, TOTAL_SLIDES - 1));
+  slides.forEach((slide, slideIndex) => {
+    slide.classList.toggle("active", slideIndex === currentSlide);
+  });
+  updateNavigation();
+}
+
+function showStatusMessage(message, isError = true) {
+  statusMessageEl.textContent = message;
+  statusMessageEl.classList.remove("hidden");
+  statusMessageEl.style.color = isError ? "" : "#537f6b";
+}
+
+function clearStatusMessage() {
+  statusMessageEl.textContent = "";
+  statusMessageEl.classList.add("hidden");
+  statusMessageEl.style.color = "";
+}
+
+function nextSlide() {
+  const targetIndex = currentSlide + 1;
+
+  if (targetIndex >= TOTAL_SLIDES || !validateSlide(targetIndex)) {
+    return;
+  }
+
+  clearStatusMessage();
+  goToSlide(targetIndex);
+}
+
+function prevSlide() {
+  if (currentSlide === 0) {
+    return;
+  }
+
+  clearStatusMessage();
+  goToSlide(currentSlide - 1);
 }
 
 function validateMatchmakingState(person1, partner) {
@@ -388,7 +586,14 @@ function validateMatchmakingState(person1, partner) {
   }
 
   if (!partner) {
-    renderMessage("Select a partner before clicking Matchmake.", true);
+    renderMessage("Select a partner before clicking Start Matchmaking.", true);
+    return false;
+  }
+
+  const preferences = person1.weddingPreferences;
+
+  if (!preferences.cakeFlavor || !preferences.musicType || !preferences.invitationStyle) {
+    renderMessage("Finish the wedding preference slide before matchmaking.", true);
     return false;
   }
 
@@ -406,13 +611,14 @@ async function handleMatchmake() {
   }
 
   showMatchmakingOverlay();
-
   await delay(randomNumber(1200, 1900));
 
   const compatibility = calculateCompatibility(person1, partner);
   const outcome = getOutcome(compatibility.score);
 
   hideMatchmakingOverlay();
+  clearStatusMessage();
+  goToSlide(5);
   renderResult({
     ...compatibility,
     partnerName: partner.name,
@@ -422,8 +628,38 @@ async function handleMatchmake() {
 
 function delay(ms) {
   return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
+    matchmakingTimeoutId = window.setTimeout(() => {
+      matchmakingTimeoutId = null;
+      resolve();
+    }, ms);
   });
+}
+
+function togglePlayAgainButton(shouldShow) {
+  resultActionsEl.classList.toggle("hidden", !shouldShow);
+}
+
+function clearSelectedPartner() {
+  document.querySelectorAll('input[name="selected-partner"]').forEach((input) => {
+    input.checked = false;
+  });
+}
+
+function resetToNewMatch() {
+  clearMatchmakingTimers();
+  overlayEl.classList.add("hidden");
+  overlayEl.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("overlay-open");
+  clearResultEffects();
+  clearSelectedPartner();
+  togglePlayAgainButton(false);
+  resultEl.classList.add("is-resetting");
+
+  window.setTimeout(() => {
+    renderPlaceholder();
+    resultEl.classList.remove("is-resetting");
+    goToSlide(0);
+  }, 180);
 }
 
 async function toggleMusic() {
@@ -475,13 +711,17 @@ function bindChoiceUpdates() {
   document.querySelectorAll('input[name="partner-role"]').forEach((radio) => {
     radio.addEventListener("change", () => {
       renderPartners(radio.value);
-      renderPlaceholder();
+
+      if (resultEl.classList.contains("error")) {
+        renderPlaceholder();
+      }
     });
   });
 
-  document.querySelectorAll('input[name="person1-role"], input[name="person1-style"], input[name="player-vibe"]').forEach((input) => {
+  document.querySelectorAll('input[name="person1-role"], input[name="person1-style"], input[name="player-vibe"], input[name="cake-flavor"], input[name="music-type"], input[name="invitation-style"]').forEach((input) => {
     input.addEventListener("change", () => {
       updatePlayerCard();
+      clearStatusMessage();
 
       if (resultEl.classList.contains("error")) {
         renderPlaceholder();
@@ -503,8 +743,11 @@ function initializeAudio() {
   weddingAudio.addEventListener("pause", () => updateMusicButton(false));
 }
 
+backBtn.addEventListener("click", prevSlide);
+nextBtn.addEventListener("click", nextSlide);
 matchmakeBtn.addEventListener("click", handleMatchmake);
 musicToggleBtn.addEventListener("click", toggleMusic);
+playAgainBtn.addEventListener("click", resetToNewMatch);
 
 setupTraitLimits("person1-traits");
 setupTraitLimits("desired-traits");
@@ -513,3 +756,4 @@ bindChoiceUpdates();
 updatePlayerCard();
 initializeAudio();
 renderPlaceholder();
+goToSlide(0);
