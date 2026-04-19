@@ -153,7 +153,7 @@ const minigames = [
   {
     name: "Cake Timing",
     kicker: "Minigame 1",
-    instructions: "Cake Timing: click the popup when you are ready to reveal the cake.",
+    instructions: "Click at the perfect moment to cut the cake!",
     outcomes: [
       { label: "Perfect", score: 10, message: "The cake lands on the table at the exact dreamy moment. Frosting destiny approved." },
       { label: "Good", score: 5, message: "The cake reveal is charming, even if the timing is a little offbeat." },
@@ -164,7 +164,7 @@ const minigames = [
   {
     name: "Bouquet Catch",
     kicker: "Minigame 2",
-    instructions: "Bouquet Catch: click the popup to make your catch attempt.",
+    instructions: "Click to catch the bouquet!",
     outcomes: [
       { label: "Success", score: 6, message: "The bouquet arc is perfect and the crowd erupts in delighted cheers." },
       { label: "Miss", score: 0, message: "The bouquet slips through the chaos and lands in decorative shrubbery." }
@@ -174,9 +174,9 @@ const minigames = [
   {
     name: "Dance Floor Hype",
     kicker: "Minigame 3",
-    instructions: "Dance Floor Hype: click the popup to hype the room and see how the crowd responds.",
+    instructions: "Click to hype the dance floor!",
     outcomes: [
-      { label: "High energy", score: 8, message: "The dance floor is glowing and even the shy guests are fully committed." },
+      { label: "High", score: 8, message: "The dance floor is glowing and even the shy guests are fully committed." },
       { label: "Medium", score: 4, message: "The dance circle finds a cute rhythm and keeps the mood afloat." },
       { label: "Low", score: 0, message: "The dance floor energy is gentle, polite, and a little sleepy." }
     ],
@@ -816,7 +816,7 @@ async function runWeddingGameplaySequence() {
     }, 0, { clickToContinue: true });
     await waitForClick();
     hidePopup();
-    await delay(randomNumber(900, 1200));
+    await delay(randomNumber(1000, 1300));
 
     const outcome = pickWeightedOutcome(minigame.outcomes, minigame.weights);
     bonusScore += outcome.score;
@@ -825,8 +825,8 @@ async function runWeddingGameplaySequence() {
       title: `${minigame.name}: ${outcome.label}`,
       message: outcome.message,
       score: outcome.score
-    }, 10000, { clickToContinue: true });
-    await waitForClick();
+    }, 10000);
+    await delay(randomNumber(1000, 1500));
     hidePopup();
     await delay(randomNumber(1000, 1400));
   }
@@ -838,8 +838,8 @@ async function runWeddingGameplaySequence() {
     title: npcEvent.title,
     message: npcEvent.message,
     score: npcEvent.score
-  }, 10000, { clickToContinue: true });
-  await waitForClick();
+  }, 10000);
+  await delay(randomNumber(1200, 1500));
   hidePopup();
   await delay(randomNumber(1000, 1500));
 }
