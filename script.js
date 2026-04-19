@@ -88,31 +88,31 @@ const matchmakingMessages = [
 const npcEvents = [
   {
     kicker: "NPC Event",
-    title: "Isabella (Wedding Planner)",
+    title: "Wedding Planner Promise",
     score: 8,
     message: "Isabella, your wedding planner, secures a huge discount that impresses the guests!"
   },
   {
     kicker: "NPC Event",
-    title: "Your Family",
+    title: "Strong Family Values",
     score: 6,
     message: "Your family unexpectedly turns the reception into a warm, supportive celebration that boosts the mood."
   },
   {
     kicker: "NPC Event",
-    title: "Andrew (Friend)",
+    title: "This Can't be Happening!",
     score: -10,
     message: "Your friend Andrew objects your wedding as a prank, creating an awkward moment."
   },
   {
     kicker: "NPC Event",
-    title: "DJ Marvin",
-    score: 5,
+    title: "Marvelous Marv",
+    score: 6,
     message: "DJ Marvin saves the room with a flawless transition and the guests instantly recover their sparkle."
   },
   {
     kicker: "NPC Event",
-    title: "DJ Marvin",
+    title: "Messy Marvin",
     score: -6,
     message: "DJ Marvin misreads the room with a chaotic remix and the crowd loses momentum for a while."
   }
