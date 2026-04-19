@@ -179,21 +179,78 @@
             </div>
           </section>
 
-      <section class="wizard-slide" data-slide="4">
+          <section class="wizard-slide" data-slide="4">
             <div class="section-heading">
               <p class="section-kicker">Slide 5</p>
-              <h2>Start matchmaking</h2>
+              <h2>Cake Timing</h2>
             </div>
 
-            <div class="matchmake-stage">
-              <p class="partner-intro">Everything is set. Start the compatibility check, play three quick wedding minigames, survive one random NPC moment, and then see the final result.</p>
-              <button id="matchmake-btn" type="button">Start Matchmaking</button>
+            <div class="game-card">
+              <p class="partner-intro">Click at the perfect moment to cut the cake.</p>
+              <div class="timing-track" aria-hidden="true">
+                <div class="timing-zone"></div>
+                <div id="cake-marker" class="timing-marker"></div>
+              </div>
+              <div class="game-actions">
+                <button id="cake-start-btn" type="button">Start Cake Timing</button>
+                <button id="cake-cut-btn" class="ghost-button" type="button" disabled>Cut The Cake</button>
+              </div>
+              <div id="cake-result" class="game-result">Start the game, then stop the marker near the center.</div>
             </div>
           </section>
 
-          <section class="wizard-slide result-slide" data-slide="5">
+          <section class="wizard-slide" data-slide="5">
             <div class="section-heading">
               <p class="section-kicker">Slide 6</p>
+              <h2>Bouquet Catch</h2>
+            </div>
+
+            <div class="game-card">
+              <p class="partner-intro">Wait for the signal, then click as fast as you can.</p>
+              <div id="bouquet-status" class="reaction-status">Press start when you're ready.</div>
+              <div class="game-actions">
+                <button id="bouquet-start-btn" type="button">Start Bouquet Catch</button>
+                <button id="bouquet-catch-btn" class="ghost-button" type="button" disabled>Catch!</button>
+              </div>
+              <div id="bouquet-result" class="game-result">Fast reactions earn the biggest bouquet bonus.</div>
+            </div>
+          </section>
+
+          <section class="wizard-slide" data-slide="6">
+            <div class="section-heading">
+              <p class="section-kicker">Slide 7</p>
+              <h2>Dance Floor Hype</h2>
+            </div>
+
+            <div class="game-card">
+              <p class="partner-intro">Build the dance-floor energy before the timer runs out.</p>
+              <div class="meter-shell" aria-hidden="true">
+                <div id="dance-meter-fill" class="meter-fill"></div>
+              </div>
+              <div id="dance-status" class="reaction-status">Press start, then click HYPE! as fast as you can.</div>
+              <div class="game-actions">
+                <button id="dance-start-btn" type="button">Start Dance Floor Hype</button>
+                <button id="dance-hype-btn" class="ghost-button" type="button" disabled>HYPE!</button>
+              </div>
+              <div id="dance-result" class="game-result">More clicks mean a bigger crowd-energy bonus.</div>
+            </div>
+          </section>
+
+          <section class="wizard-slide" data-slide="7">
+            <div class="section-heading">
+              <p class="section-kicker">Slide 8</p>
+              <h2>Finalize Matchmaking</h2>
+            </div>
+
+            <div class="matchmake-stage">
+              <p class="partner-intro">The wedding minigames are done. Trigger the random NPC event, lock in your bonus score, and reveal the final wedding fate.</p>
+              <button id="matchmake-btn" type="button">Reveal Wedding Fate</button>
+            </div>
+          </section>
+
+          <section class="wizard-slide result-slide" data-slide="8">
+            <div class="section-heading">
+              <p class="section-kicker">Slide 9</p>
               <h2>Wedding outcome</h2>
             </div>
             <div id="result" class="result empty">

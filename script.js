@@ -85,6 +85,39 @@ const matchmakingMessages = [
   "Checking romantic energy..."
 ];
 
+const npcEvents = [
+  {
+    kicker: "NPC Event",
+    title: "Isabella (Wedding Planner)",
+    score: 8,
+    message: "Isabella, your wedding planner, secures a huge discount that impresses the guests!"
+  },
+  {
+    kicker: "NPC Event",
+    title: "Your Family",
+    score: 6,
+    message: "Your family unexpectedly turns the reception into a warm, supportive celebration that boosts the mood."
+  },
+  {
+    kicker: "NPC Event",
+    title: "Andrew (Friend)",
+    score: -10,
+    message: "Your friend Andrew objects your wedding as a prank, creating an awkward moment."
+  },
+  {
+    kicker: "NPC Event",
+    title: "DJ Marvin",
+    score: 5,
+    message: "DJ Marvin saves the room with a flawless transition and the guests instantly recover their sparkle."
+  },
+  {
+    kicker: "NPC Event",
+    title: "DJ Marvin",
+    score: -6,
+    message: "DJ Marvin misreads the room with a chaotic remix and the crowd loses momentum for a while."
+  }
+];
+
 const resultVariants = {
   dream: [
     "The venue practically glows when this pair walks in together.",
@@ -115,7 +148,6 @@ const matchmakeBtn = document.getElementById("matchmake-btn");
 const overlayEl = document.getElementById("matchmaking-overlay");
 const matchmakingMessageEl = document.getElementById("matchmaking-message");
 const gameplayPopupEl = document.getElementById("gameplay-popup");
-const gameplayPopupCardEl = gameplayPopupEl.querySelector(".gameplay-popup-card");
 const gameplayPopupKickerEl = document.getElementById("gameplay-popup-kicker");
 const gameplayPopupTitleEl = document.getElementById("gameplay-popup-title");
 const gameplayPopupMessageEl = document.getElementById("gameplay-popup-message");
@@ -136,9 +168,37 @@ const nextBtn = document.getElementById("next-btn");
 const progressLabelEl = document.getElementById("journey-progress");
 const progressFillEl = document.getElementById("progress-fill");
 
+const cakeStartBtn = document.getElementById("cake-start-btn");
+const cakeCutBtn = document.getElementById("cake-cut-btn");
+const cakeMarkerEl = document.getElementById("cake-marker");
+const cakeResultEl = document.getElementById("cake-result");
+
+const bouquetStartBtn = document.getElementById("bouquet-start-btn");
+const bouquetCatchBtn = document.getElementById("bouquet-catch-btn");
+const bouquetStatusEl = document.getElementById("bouquet-status");
+const bouquetResultEl = document.getElementById("bouquet-result");
+
+const danceStartBtn = document.getElementById("dance-start-btn");
+const danceHypeBtn = document.getElementById("dance-hype-btn");
+const danceStatusEl = document.getElementById("dance-status");
+const danceResultEl = document.getElementById("dance-result");
+const danceMeterFillEl = document.getElementById("dance-meter-fill");
+
 const TRAIT_LIMIT = 2;
 const MUSIC_TARGET_VOLUME = 0.25;
 const TOTAL_SLIDES = slides.length;
+
+const slideIndex = {
+  setup: 0,
+  traits: 1,
+  partner: 2,
+  preferences: 3,
+  cake: 4,
+  bouquet: 5,
+  dance: 6,
+  finalize: 7,
+  result: 8
+};
 
 let currentSlide = 0;
 let matchmakingIntervalId = null;
@@ -146,81 +206,33 @@ let matchmakingTimeoutId = null;
 let musicHasStarted = false;
 let bonusScore = 0;
 let popupTimeoutId = null;
-let popupClickResolver = null;
-let popupInteractionEnabled = false;
+let popupDismissResolver = null;
 
-const minigames = [
-  {
-    name: "Cake Timing",
-    kicker: "Minigame 1",
-    instructions: "Click at the perfect moment to cut the cake!",
-    outcomes: [
-      { label: "Perfect", score: 10, message: "The cake lands on the table at the exact dreamy moment. Frosting destiny approved." },
-      { label: "Good", score: 5, message: "The cake reveal is charming, even if the timing is a little offbeat." },
-      { label: "Miss", score: -5, message: "The cake rollout wobbles and the room winces for one dramatic second." }
-    ],
-    weights: [0.32, 0.46, 0.22]
+const gameState = {
+  cake: {
+    completed: false,
+    running: false,
+    score: 0,
+    markerPosition: 0,
+    direction: 1,
+    intervalId: null
   },
-  {
-    name: "Bouquet Catch",
-    kicker: "Minigame 2",
-    instructions: "Click to catch the bouquet!",
-    outcomes: [
-      { label: "Success", score: 6, message: "The bouquet arc is perfect and the crowd erupts in delighted cheers." },
-      { label: "Miss", score: 0, message: "The bouquet slips through the chaos and lands in decorative shrubbery." }
-    ],
-    weights: [0.58, 0.42]
+  bouquet: {
+    completed: false,
+    running: false,
+    score: 0,
+    ready: false,
+    startTime: 0,
+    timeoutId: null
   },
-  {
-    name: "Dance Floor Hype",
-    kicker: "Minigame 3",
-    instructions: "Click to hype the dance floor!",
-    outcomes: [
-      { label: "High", score: 8, message: "The dance floor is glowing and even the shy guests are fully committed." },
-      { label: "Medium", score: 4, message: "The dance circle finds a cute rhythm and keeps the mood afloat." },
-      { label: "Low", score: 0, message: "The dance floor energy is gentle, polite, and a little sleepy." }
-    ],
-    weights: [0.34, 0.4, 0.26]
+  dance: {
+    completed: false,
+    running: false,
+    score: 0,
+    clicks: 0,
+    timeoutId: null
   }
-];
-
-const npcEvents = [
-  {
-    npc: "Isabella",
-    kicker: "NPC Event",
-    title: "Isabella (Wedding Planner)",
-    score: 8,
-    message: "Isabella, your wedding planner, secures a huge discount that impresses the guests!"
-  },
-  {
-    npc: "Your Family",
-    kicker: "NPC Event",
-    title: "Your Family",
-    score: 6,
-    message: "Your family unexpectedly turns the reception into a warm, supportive celebration that boosts the mood."
-  },
-  {
-    npc: "Andrew",
-    kicker: "NPC Event",
-    title: "Andrew (Friend)",
-    score: -10,
-    message: "Your friend Andrew objects your wedding as a prank, creating an awkward moment."
-  },
-  {
-    npc: "DJ Marvin",
-    kicker: "NPC Event",
-    title: "DJ Marvin",
-    score: 5,
-    message: "DJ Marvin saves the room with a flawless transition and the guests instantly recover their sparkle."
-  },
-  {
-    npc: "DJ Marvin",
-    kicker: "NPC Event",
-    title: "DJ Marvin",
-    score: -6,
-    message: "DJ Marvin misreads the room with a chaotic remix and the crowd loses momentum for a while."
-  }
-];
+};
 
 function setupTraitLimits(groupName) {
   const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
@@ -232,8 +244,8 @@ function setupTraitLimits(groupName) {
       if (checked.length > TRAIT_LIMIT) {
         checkbox.checked = false;
         renderMessage(`You can only choose up to ${TRAIT_LIMIT} options in this section.`, true);
-      } else if (resultEl.classList.contains("error")) {
-        renderPlaceholder();
+      } else {
+        clearStatusMessage();
       }
 
       updatePlayerCard();
@@ -269,10 +281,7 @@ function updatePlayerCard() {
   playerRoleStyleEl.textContent = `${role} • ${capitalize(style)} style • ${styleDescriptions[style]}`;
   playerTraitSummaryEl.innerHTML = createChipMarkup(traits, "Choose traits");
   desiredTraitSummaryEl.innerHTML = createChipMarkup(desiredTraits, "Choose preferences");
-  weddingPreferenceSummaryEl.innerHTML = createChipMarkup(
-    Object.values(weddingChoices).filter(Boolean),
-    "Choose wedding details"
-  );
+  weddingPreferenceSummaryEl.innerHTML = createChipMarkup(Object.values(weddingChoices).filter(Boolean), "Choose wedding details");
 }
 
 function renderPartners(role, selectedPartnerName = "") {
@@ -515,37 +524,55 @@ function showMatchmakingOverlay() {
   }, 550);
 }
 
-function showPopup(content, duration = 10000, options = {}) {
+function hideMatchmakingOverlay() {
+  clearMatchmakingTimers();
+  overlayEl.classList.add("hidden");
+  overlayEl.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("overlay-open");
+  setInteractionDisabled(false);
+}
+
+function showPopup(content, duration = 10000) {
   const popupContent = typeof content === "string" ? { message: content } : content;
-  const kicker = popupContent.kicker || "Wedding Moment";
-  const title = popupContent.title || "Wedding Update";
-  const message = popupContent.message || "";
-  const score = popupContent.score;
 
   clearPopupTimeout();
-  clearPopupInteraction();
+  clearPopupDismiss();
 
-  gameplayPopupKickerEl.textContent = kicker;
-  gameplayPopupTitleEl.textContent = title;
-  gameplayPopupMessageEl.textContent = message;
-  gameplayPopupScoreEl.textContent = typeof score === "number" ? `${formatSignedScore(score)} bonus` : "Click the popup to continue";
+  gameplayPopupKickerEl.textContent = popupContent.kicker || "Wedding Moment";
+  gameplayPopupTitleEl.textContent = popupContent.title || "Wedding Update";
+  gameplayPopupMessageEl.textContent = popupContent.message || "";
+  gameplayPopupScoreEl.textContent = typeof popupContent.score === "number" ? `${formatSignedScore(popupContent.score)} bonus` : "Closing soon...";
   gameplayPopupEl.classList.remove("hidden");
   gameplayPopupEl.setAttribute("aria-hidden", "false");
-  popupInteractionEnabled = Boolean(options.clickToContinue);
 
-  if (duration && !options.clickToContinue) {
-    popupTimeoutId = window.setTimeout(() => {
-      hidePopup();
-    }, duration);
-  }
+  popupTimeoutId = window.setTimeout(() => {
+    hidePopup();
+    resolvePopupDismiss();
+  }, duration);
 }
 
 function hidePopup() {
   clearPopupTimeout();
-  clearPopupInteraction();
   gameplayPopupEl.classList.add("hidden");
   gameplayPopupEl.setAttribute("aria-hidden", "true");
-  popupInteractionEnabled = false;
+}
+
+function waitForPopupDismiss() {
+  return new Promise((resolve) => {
+    popupDismissResolver = resolve;
+  });
+}
+
+function clearPopupDismiss() {
+  popupDismissResolver = null;
+}
+
+function resolvePopupDismiss() {
+  if (popupDismissResolver) {
+    const resolver = popupDismissResolver;
+    popupDismissResolver = null;
+    resolver();
+  }
 }
 
 function clearPopupTimeout() {
@@ -553,35 +580,6 @@ function clearPopupTimeout() {
     window.clearTimeout(popupTimeoutId);
     popupTimeoutId = null;
   }
-}
-
-function clearPopupInteraction() {
-  if (popupClickResolver) {
-    popupClickResolver = null;
-  }
-}
-
-function resolvePopupInteraction() {
-  if (popupClickResolver) {
-    const resolver = popupClickResolver;
-    popupClickResolver = null;
-    resolver();
-  }
-}
-
-function waitForClick() {
-  return new Promise((resolve) => {
-    popupInteractionEnabled = true;
-    popupClickResolver = resolve;
-  });
-}
-
-function hideMatchmakingOverlay() {
-  clearMatchmakingTimers();
-  overlayEl.classList.add("hidden");
-  overlayEl.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("overlay-open");
-  setInteractionDisabled(false);
 }
 
 function clearMatchmakingTimers() {
@@ -596,10 +594,6 @@ function clearMatchmakingTimers() {
   }
 }
 
-function formatSignedScore(value) {
-  return value >= 0 ? `+${value}` : `${value}`;
-}
-
 function setInteractionDisabled(isDisabled) {
   matchmakeBtn.disabled = isDisabled;
   musicToggleBtn.disabled = isDisabled;
@@ -610,23 +604,21 @@ function setInteractionDisabled(isDisabled) {
   });
 }
 
-function randomNumber(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function formatSignedScore(value) {
+  return value >= 0 ? `+${value}` : `${value}`;
 }
 
-function pickWeightedOutcome(options, weights) {
-  const roll = Math.random();
-  let threshold = 0;
+function delay(ms) {
+  return new Promise((resolve) => {
+    matchmakingTimeoutId = window.setTimeout(() => {
+      matchmakingTimeoutId = null;
+      resolve();
+    }, ms);
+  });
+}
 
-  for (let index = 0; index < options.length; index += 1) {
-    threshold += weights[index];
-
-    if (roll <= threshold) {
-      return options[index];
-    }
-  }
-
-  return options[options.length - 1];
+function randomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function capitalize(value) {
@@ -648,14 +640,14 @@ function collectPerson1() {
 }
 
 function validateSlide(index) {
-  if (index === 1) {
+  if (index === slideIndex.traits) {
     if (!getSelectedRadioValue("person1-role") || !getSelectedRadioValue("person1-style") || !getSelectedRadioValue("player-vibe")) {
       renderMessage("Complete the role, style, and vibe selections before continuing.", true);
       return false;
     }
   }
 
-  if (index === 2) {
+  if (index === slideIndex.partner) {
     if (getSelectedCheckboxValues("person1-traits").length === 0) {
       renderMessage("Choose at least 1 personality trait for Person 1 before continuing.", true);
       return false;
@@ -667,14 +659,12 @@ function validateSlide(index) {
     }
   }
 
-  if (index === 3) {
-    if (!getSelectedRadioValue("selected-partner")) {
-      renderMessage("Select a partner before continuing.", true);
-      return false;
-    }
+  if (index === slideIndex.preferences && !getSelectedRadioValue("selected-partner")) {
+    renderMessage("Select a partner before continuing.", true);
+    return false;
   }
 
-  if (index === 4) {
+  if (index === slideIndex.cake) {
     const preferences = collectWeddingPreferences();
 
     if (!preferences.cakeFlavor || !preferences.musicType || !preferences.invitationStyle) {
@@ -683,19 +673,65 @@ function validateSlide(index) {
     }
   }
 
+  if (index === slideIndex.bouquet && !gameState.cake.completed) {
+    renderMessage("Finish Cake Timing before continuing.", true);
+    return false;
+  }
+
+  if (index === slideIndex.dance && !gameState.bouquet.completed) {
+    renderMessage("Finish Bouquet Catch before continuing.", true);
+    return false;
+  }
+
+  if (index === slideIndex.finalize && !gameState.dance.completed) {
+    renderMessage("Finish Dance Floor Hype before continuing.", true);
+    return false;
+  }
+
   return true;
+}
+
+function isGameRunningOnCurrentSlide() {
+  if (currentSlide === slideIndex.cake) {
+    return gameState.cake.running;
+  }
+
+  if (currentSlide === slideIndex.bouquet) {
+    return gameState.bouquet.running;
+  }
+
+  if (currentSlide === slideIndex.dance) {
+    return gameState.dance.running;
+  }
+
+  return false;
+}
+
+function shouldDisableNextButton() {
+  if (currentSlide === slideIndex.cake) {
+    return !gameState.cake.completed || gameState.cake.running;
+  }
+
+  if (currentSlide === slideIndex.bouquet) {
+    return !gameState.bouquet.completed || gameState.bouquet.running;
+  }
+
+  if (currentSlide === slideIndex.dance) {
+    return !gameState.dance.completed || gameState.dance.running;
+  }
+
+  return currentSlide === slideIndex.finalize;
 }
 
 function updateNavigation() {
   progressLabelEl.textContent = `Step ${currentSlide + 1} of ${TOTAL_SLIDES}`;
   progressFillEl.style.width = `${((currentSlide + 1) / TOTAL_SLIDES) * 100}%`;
-  backBtn.disabled = currentSlide === 0;
+  backBtn.disabled = currentSlide === 0 || isGameRunningOnCurrentSlide();
+  nextBtn.disabled = shouldDisableNextButton();
 
   if (currentSlide >= TOTAL_SLIDES - 2) {
-    nextBtn.classList.add("hidden-nav");
     nextBtn.style.visibility = "hidden";
   } else {
-    nextBtn.classList.remove("hidden-nav");
     nextBtn.style.visibility = "visible";
     nextBtn.textContent = "Next";
   }
@@ -703,8 +739,8 @@ function updateNavigation() {
 
 function goToSlide(index) {
   currentSlide = Math.max(0, Math.min(index, TOTAL_SLIDES - 1));
-  slides.forEach((slide, slideIndex) => {
-    slide.classList.toggle("active", slideIndex === currentSlide);
+  slides.forEach((slide, slideIndexNumber) => {
+    slide.classList.toggle("active", slideIndexNumber === currentSlide);
   });
   updateNavigation();
 }
@@ -733,7 +769,7 @@ function nextSlide() {
 }
 
 function prevSlide() {
-  if (currentSlide === 0) {
+  if (currentSlide === 0 || isGameRunningOnCurrentSlide()) {
     return;
   }
 
@@ -753,7 +789,7 @@ function validateMatchmakingState(person1, partner) {
   }
 
   if (!partner) {
-    renderMessage("Select a partner before clicking Start Matchmaking.", true);
+    renderMessage("Select a partner before revealing the result.", true);
     return false;
   }
 
@@ -764,7 +800,20 @@ function validateMatchmakingState(person1, partner) {
     return false;
   }
 
-  return true;
+  return gameState.cake.completed && gameState.bouquet.completed && gameState.dance.completed;
+}
+
+async function triggerNpcEvent() {
+  const npcEvent = npcEvents[randomNumber(0, npcEvents.length - 1)];
+  bonusScore += npcEvent.score;
+  showPopup({
+    kicker: npcEvent.kicker,
+    title: npcEvent.title,
+    message: npcEvent.message,
+    score: npcEvent.score
+  }, 10000);
+  await waitForPopupDismiss();
+  await delay(1100);
 }
 
 async function handleMatchmake() {
@@ -774,74 +823,26 @@ async function handleMatchmake() {
   const partner = (partners[partnerRole] || []).find((item) => item.name === selectedPartnerName);
 
   if (!validateMatchmakingState(person1, partner)) {
+    renderMessage("Complete all three minigames before revealing the final result.", true);
     return;
   }
 
   showMatchmakingOverlay();
   await delay(randomNumber(1200, 1900));
-
   hideMatchmakingOverlay();
-  await runWeddingGameplaySequence();
+
+  await triggerNpcEvent();
 
   const compatibility = calculateCompatibility(person1, partner);
   const outcome = getOutcome(compatibility.score);
 
   clearStatusMessage();
-  goToSlide(5);
+  goToSlide(slideIndex.result);
   renderResult({
     ...compatibility,
     partnerName: partner.name,
     outcome
   });
-}
-
-function delay(ms) {
-  return new Promise((resolve) => {
-    matchmakingTimeoutId = window.setTimeout(() => {
-      matchmakingTimeoutId = null;
-      resolve();
-    }, ms);
-  });
-}
-
-async function runWeddingGameplaySequence() {
-  bonusScore = 0;
-
-  for (const minigame of minigames) {
-    showPopup({
-      kicker: minigame.kicker,
-      title: minigame.name,
-      message: minigame.instructions,
-      score: null
-    }, 0, { clickToContinue: true });
-    await waitForClick();
-    hidePopup();
-    await delay(randomNumber(1000, 1300));
-
-    const outcome = pickWeightedOutcome(minigame.outcomes, minigame.weights);
-    bonusScore += outcome.score;
-    showPopup({
-      kicker: minigame.kicker,
-      title: `${minigame.name}: ${outcome.label}`,
-      message: outcome.message,
-      score: outcome.score
-    }, 10000);
-    await delay(randomNumber(1000, 1500));
-    hidePopup();
-    await delay(randomNumber(1000, 1400));
-  }
-
-  const npcEvent = npcEvents[randomNumber(0, npcEvents.length - 1)];
-  bonusScore += npcEvent.score;
-  showPopup({
-    kicker: npcEvent.kicker,
-    title: npcEvent.title,
-    message: npcEvent.message,
-    score: npcEvent.score
-  }, 10000);
-  await delay(randomNumber(1200, 1500));
-  hidePopup();
-  await delay(randomNumber(1000, 1500));
 }
 
 function togglePlayAgainButton(shouldShow) {
@@ -854,22 +855,265 @@ function clearSelectedPartner() {
   });
 }
 
+function setCakeScore(score, message) {
+  bonusScore -= gameState.cake.score;
+  gameState.cake.score = score;
+  bonusScore += score;
+  gameState.cake.completed = true;
+  gameState.cake.running = false;
+  cakeStartBtn.disabled = false;
+  cakeCutBtn.disabled = true;
+  cakeResultEl.textContent = `${message} ${formatSignedScore(score)} bonus.`;
+  updateNavigation();
+}
+
+function startCakeGame() {
+  if (gameState.cake.intervalId) {
+    window.clearInterval(gameState.cake.intervalId);
+  }
+
+  bonusScore -= gameState.cake.score;
+  gameState.cake.score = 0;
+  gameState.cake.completed = false;
+  gameState.cake.running = true;
+  gameState.cake.markerPosition = 0;
+  gameState.cake.direction = 1;
+  cakeMarkerEl.style.left = "0%";
+  cakeResultEl.textContent = "The marker is moving. Stop it near the center zone.";
+  cakeStartBtn.disabled = true;
+  cakeCutBtn.disabled = false;
+  clearStatusMessage();
+  updateNavigation();
+
+  gameState.cake.intervalId = window.setInterval(() => {
+    gameState.cake.markerPosition += gameState.cake.direction * 2.4;
+
+    if (gameState.cake.markerPosition >= 96) {
+      gameState.cake.markerPosition = 96;
+      gameState.cake.direction = -1;
+    }
+
+    if (gameState.cake.markerPosition <= 0) {
+      gameState.cake.markerPosition = 0;
+      gameState.cake.direction = 1;
+    }
+
+    cakeMarkerEl.style.left = `${gameState.cake.markerPosition}%`;
+  }, 16);
+}
+
+function stopCakeGame() {
+  if (!gameState.cake.running) {
+    return;
+  }
+
+  window.clearInterval(gameState.cake.intervalId);
+  gameState.cake.intervalId = null;
+
+  const centerDistance = Math.abs((gameState.cake.markerPosition + 2) - 50);
+
+  if (centerDistance <= 6) {
+    setCakeScore(15, "Perfect cake cut.");
+    return;
+  }
+
+  if (centerDistance <= 14) {
+    setCakeScore(10, "Great timing on the cake cut.");
+    return;
+  }
+
+  if (centerDistance <= 28) {
+    setCakeScore(5, "The cake cut works, just with a little wobble.");
+    return;
+  }
+
+  setCakeScore(-5, "The cake timing is way off and the room gasps.");
+}
+
+function finalizeBouquetGame(score, message) {
+  bonusScore -= gameState.bouquet.score;
+  gameState.bouquet.score = score;
+  bonusScore += score;
+  gameState.bouquet.completed = true;
+  gameState.bouquet.running = false;
+  gameState.bouquet.ready = false;
+  bouquetStartBtn.disabled = false;
+  bouquetCatchBtn.disabled = true;
+  bouquetStatusEl.textContent = "Bouquet round complete.";
+  bouquetResultEl.textContent = `${message} ${formatSignedScore(score)} bonus.`;
+  updateNavigation();
+}
+
+function startBouquetGame() {
+  if (gameState.bouquet.timeoutId) {
+    window.clearTimeout(gameState.bouquet.timeoutId);
+  }
+
+  bonusScore -= gameState.bouquet.score;
+  gameState.bouquet.score = 0;
+  gameState.bouquet.completed = false;
+  gameState.bouquet.running = true;
+  gameState.bouquet.ready = false;
+  bouquetStartBtn.disabled = true;
+  bouquetCatchBtn.disabled = true;
+  bouquetStatusEl.textContent = "Get Ready...";
+  bouquetResultEl.textContent = "Wait for the signal before you click Catch!";
+  clearStatusMessage();
+  updateNavigation();
+
+  gameState.bouquet.timeoutId = window.setTimeout(() => {
+    gameState.bouquet.ready = true;
+    gameState.bouquet.startTime = Date.now();
+    bouquetStatusEl.textContent = "CATCH!";
+    bouquetCatchBtn.disabled = false;
+  }, randomNumber(1000, 3000));
+}
+
+function catchBouquet() {
+  if (!gameState.bouquet.running || !gameState.bouquet.ready) {
+    return;
+  }
+
+  const reactionTime = Date.now() - gameState.bouquet.startTime;
+  window.clearTimeout(gameState.bouquet.timeoutId);
+  gameState.bouquet.timeoutId = null;
+
+  if (reactionTime < 300) {
+    finalizeBouquetGame(15, `Lightning-fast catch in ${reactionTime}ms.`);
+    return;
+  }
+
+  if (reactionTime < 600) {
+    finalizeBouquetGame(10, `Nice catch in ${reactionTime}ms.`);
+    return;
+  }
+
+  finalizeBouquetGame(5, `You catch it in ${reactionTime}ms, just a little late.`);
+}
+
+function finalizeDanceGame(score, message) {
+  bonusScore -= gameState.dance.score;
+  gameState.dance.score = score;
+  bonusScore += score;
+  gameState.dance.completed = true;
+  gameState.dance.running = false;
+  danceStartBtn.disabled = false;
+  danceHypeBtn.disabled = true;
+  danceStatusEl.textContent = "Dance-floor round complete.";
+  danceResultEl.textContent = `${message} ${formatSignedScore(score)} bonus.`;
+  updateNavigation();
+}
+
+function startDanceGame() {
+  if (gameState.dance.timeoutId) {
+    window.clearTimeout(gameState.dance.timeoutId);
+  }
+
+  bonusScore -= gameState.dance.score;
+  gameState.dance.score = 0;
+  gameState.dance.completed = false;
+  gameState.dance.running = true;
+  gameState.dance.clicks = 0;
+  danceMeterFillEl.style.width = "0%";
+  danceStatusEl.textContent = "Go! Build the dance-floor energy before time runs out.";
+  danceResultEl.textContent = "Keep clicking HYPE! to fill the meter.";
+  danceStartBtn.disabled = true;
+  danceHypeBtn.disabled = false;
+  clearStatusMessage();
+  updateNavigation();
+
+  gameState.dance.timeoutId = window.setTimeout(() => {
+    const clicks = gameState.dance.clicks;
+
+    if (clicks >= 20) {
+      finalizeDanceGame(15, `The floor explodes with energy after ${clicks} hype clicks.`);
+      return;
+    }
+
+    if (clicks >= 10) {
+      finalizeDanceGame(10, `The crowd catches on with ${clicks} strong hype clicks.`);
+      return;
+    }
+
+    finalizeDanceGame(5, `The dance floor warms up slowly with ${clicks} hype clicks.`);
+  }, 4000);
+}
+
+function hypeDanceFloor() {
+  if (!gameState.dance.running) {
+    return;
+  }
+
+  gameState.dance.clicks += 1;
+  const fillPercent = Math.min((gameState.dance.clicks / 20) * 100, 100);
+  danceMeterFillEl.style.width = `${fillPercent}%`;
+  danceStatusEl.textContent = `${gameState.dance.clicks} hype clicks and counting...`;
+}
+
+function resetMinigameState() {
+  if (gameState.cake.intervalId) {
+    window.clearInterval(gameState.cake.intervalId);
+    gameState.cake.intervalId = null;
+  }
+
+  if (gameState.bouquet.timeoutId) {
+    window.clearTimeout(gameState.bouquet.timeoutId);
+    gameState.bouquet.timeoutId = null;
+  }
+
+  if (gameState.dance.timeoutId) {
+    window.clearTimeout(gameState.dance.timeoutId);
+    gameState.dance.timeoutId = null;
+  }
+
+  gameState.cake.completed = false;
+  gameState.cake.running = false;
+  gameState.cake.score = 0;
+  gameState.cake.markerPosition = 0;
+  gameState.cake.direction = 1;
+  cakeMarkerEl.style.left = "0%";
+  cakeStartBtn.disabled = false;
+  cakeCutBtn.disabled = true;
+  cakeResultEl.textContent = "Start the game, then stop the marker near the center.";
+
+  gameState.bouquet.completed = false;
+  gameState.bouquet.running = false;
+  gameState.bouquet.score = 0;
+  gameState.bouquet.ready = false;
+  gameState.bouquet.startTime = 0;
+  bouquetStartBtn.disabled = false;
+  bouquetCatchBtn.disabled = true;
+  bouquetStatusEl.textContent = "Press start when you're ready.";
+  bouquetResultEl.textContent = "Fast reactions earn the biggest bouquet bonus.";
+
+  gameState.dance.completed = false;
+  gameState.dance.running = false;
+  gameState.dance.score = 0;
+  gameState.dance.clicks = 0;
+  danceStartBtn.disabled = false;
+  danceHypeBtn.disabled = true;
+  danceMeterFillEl.style.width = "0%";
+  danceStatusEl.textContent = "Press start, then click HYPE! as fast as you can.";
+  danceResultEl.textContent = "More clicks mean a bigger crowd-energy bonus.";
+}
+
 function resetToNewMatch() {
   clearMatchmakingTimers();
+  hidePopup();
   bonusScore = 0;
   overlayEl.classList.add("hidden");
   overlayEl.setAttribute("aria-hidden", "true");
-  hidePopup();
   document.body.classList.remove("overlay-open");
   clearResultEffects();
   clearSelectedPartner();
+  resetMinigameState();
   togglePlayAgainButton(false);
   resultEl.classList.add("is-resetting");
 
   window.setTimeout(() => {
     renderPlaceholder();
     resultEl.classList.remove("is-resetting");
-    goToSlide(0);
+    goToSlide(slideIndex.setup);
   }, 180);
 }
 
@@ -922,10 +1166,7 @@ function bindChoiceUpdates() {
   document.querySelectorAll('input[name="partner-role"]').forEach((radio) => {
     radio.addEventListener("change", () => {
       renderPartners(radio.value);
-
-      if (resultEl.classList.contains("error")) {
-        renderPlaceholder();
-      }
+      clearStatusMessage();
     });
   });
 
@@ -933,17 +1174,11 @@ function bindChoiceUpdates() {
     input.addEventListener("change", () => {
       updatePlayerCard();
       clearStatusMessage();
-
-      if (resultEl.classList.contains("error")) {
-        renderPlaceholder();
-      }
     });
   });
 
-  partnerListEl.addEventListener("change", (event) => {
-    if (event.target.matches('input[name="selected-partner"]') && resultEl.classList.contains("error")) {
-      renderPlaceholder();
-    }
+  partnerListEl.addEventListener("change", () => {
+    clearStatusMessage();
   });
 }
 
@@ -960,25 +1195,25 @@ matchmakeBtn.addEventListener("click", handleMatchmake);
 musicToggleBtn.addEventListener("click", toggleMusic);
 playAgainBtn.addEventListener("click", resetToNewMatch);
 
-setupTraitLimits("person1-traits");
-setupTraitLimits("desired-traits");
-renderPartners(getSelectedRadioValue("partner-role"));
-bindChoiceUpdates();
-updatePlayerCard();
-initializeAudio();
-renderPlaceholder();
-goToSlide(0);
-
-gameplayPopupCardEl.addEventListener("click", (event) => {
-  if (!popupInteractionEnabled || event.target === gameplayPopupCloseEl) {
-    return;
-  }
-
-  resolvePopupInteraction();
-});
+cakeStartBtn.addEventListener("click", startCakeGame);
+cakeCutBtn.addEventListener("click", stopCakeGame);
+bouquetStartBtn.addEventListener("click", startBouquetGame);
+bouquetCatchBtn.addEventListener("click", catchBouquet);
+danceStartBtn.addEventListener("click", startDanceGame);
+danceHypeBtn.addEventListener("click", hypeDanceFloor);
 
 gameplayPopupCloseEl.addEventListener("click", (event) => {
   event.stopPropagation();
   hidePopup();
-  resolvePopupInteraction();
+  resolvePopupDismiss();
 });
+
+setupTraitLimits("person1-traits");
+setupTraitLimits("desired-traits");
+renderPartners(getSelectedRadioValue("partner-role"));
+bindChoiceUpdates();
+resetMinigameState();
+updatePlayerCard();
+initializeAudio();
+renderPlaceholder();
+goToSlide(slideIndex.setup);
