@@ -115,10 +115,12 @@ const matchmakeBtn = document.getElementById("matchmake-btn");
 const overlayEl = document.getElementById("matchmaking-overlay");
 const matchmakingMessageEl = document.getElementById("matchmaking-message");
 const gameplayPopupEl = document.getElementById("gameplay-popup");
+const gameplayPopupCardEl = gameplayPopupEl.querySelector(".gameplay-popup-card");
 const gameplayPopupKickerEl = document.getElementById("gameplay-popup-kicker");
 const gameplayPopupTitleEl = document.getElementById("gameplay-popup-title");
 const gameplayPopupMessageEl = document.getElementById("gameplay-popup-message");
 const gameplayPopupScoreEl = document.getElementById("gameplay-popup-score");
+const gameplayPopupCloseEl = document.getElementById("gameplay-popup-close");
 const musicToggleBtn = document.getElementById("music-toggle");
 const playAgainBtn = document.getElementById("play-again-btn");
 const resultActionsEl = document.getElementById("result-actions");
@@ -143,11 +145,15 @@ let matchmakingIntervalId = null;
 let matchmakingTimeoutId = null;
 let musicHasStarted = false;
 let bonusScore = 0;
+let popupTimeoutId = null;
+let popupClickResolver = null;
+let popupInteractionEnabled = false;
 
 const minigames = [
   {
     name: "Cake Timing",
     kicker: "Minigame 1",
+    instructions: "Cake Timing: click the popup when you are ready to reveal the cake.",
     outcomes: [
       { label: "Perfect", score: 10, message: "The cake lands on the table at the exact dreamy moment. Frosting destiny approved." },
       { label: "Good", score: 5, message: "The cake reveal is charming, even if the timing is a little offbeat." },
@@ -158,6 +164,7 @@ const minigames = [
   {
     name: "Bouquet Catch",
     kicker: "Minigame 2",
+    instructions: "Bouquet Catch: click the popup to make your catch attempt.",
     outcomes: [
       { label: "Success", score: 6, message: "The bouquet arc is perfect and the crowd erupts in delighted cheers." },
       { label: "Miss", score: 0, message: "The bouquet slips through the chaos and lands in decorative shrubbery." }
@@ -167,6 +174,7 @@ const minigames = [
   {
     name: "Dance Floor Hype",
     kicker: "Minigame 3",
+    instructions: "Dance Floor Hype: click the popup to hype the room and see how the crowd responds.",
     outcomes: [
       { label: "High energy", score: 8, message: "The dance floor is glowing and even the shy guests are fully committed." },
       { label: "Medium", score: 4, message: "The dance circle finds a cute rhythm and keeps the mood afloat." },
@@ -507,18 +515,65 @@ function showMatchmakingOverlay() {
   }, 550);
 }
 
-function showGameplayPopup({ kicker, title, message, score }) {
+function showPopup(content, duration = 10000, options = {}) {
+  const popupContent = typeof content === "string" ? { message: content } : content;
+  const kicker = popupContent.kicker || "Wedding Moment";
+  const title = popupContent.title || "Wedding Update";
+  const message = popupContent.message || "";
+  const score = popupContent.score;
+
+  clearPopupTimeout();
+  clearPopupInteraction();
+
   gameplayPopupKickerEl.textContent = kicker;
   gameplayPopupTitleEl.textContent = title;
   gameplayPopupMessageEl.textContent = message;
-  gameplayPopupScoreEl.textContent = `${formatSignedScore(score)} bonus`;
+  gameplayPopupScoreEl.textContent = typeof score === "number" ? `${formatSignedScore(score)} bonus` : "Click the popup to continue";
   gameplayPopupEl.classList.remove("hidden");
   gameplayPopupEl.setAttribute("aria-hidden", "false");
+  popupInteractionEnabled = Boolean(options.clickToContinue);
+
+  if (duration && !options.clickToContinue) {
+    popupTimeoutId = window.setTimeout(() => {
+      hidePopup();
+    }, duration);
+  }
 }
 
-function hideGameplayPopup() {
+function hidePopup() {
+  clearPopupTimeout();
+  clearPopupInteraction();
   gameplayPopupEl.classList.add("hidden");
   gameplayPopupEl.setAttribute("aria-hidden", "true");
+  popupInteractionEnabled = false;
+}
+
+function clearPopupTimeout() {
+  if (popupTimeoutId) {
+    window.clearTimeout(popupTimeoutId);
+    popupTimeoutId = null;
+  }
+}
+
+function clearPopupInteraction() {
+  if (popupClickResolver) {
+    popupClickResolver = null;
+  }
+}
+
+function resolvePopupInteraction() {
+  if (popupClickResolver) {
+    const resolver = popupClickResolver;
+    popupClickResolver = null;
+    resolver();
+  }
+}
+
+function waitForClick() {
+  return new Promise((resolve) => {
+    popupInteractionEnabled = true;
+    popupClickResolver = resolve;
+  });
 }
 
 function hideMatchmakingOverlay() {
@@ -753,29 +808,40 @@ async function runWeddingGameplaySequence() {
   bonusScore = 0;
 
   for (const minigame of minigames) {
+    showPopup({
+      kicker: minigame.kicker,
+      title: minigame.name,
+      message: minigame.instructions,
+      score: null
+    }, 0, { clickToContinue: true });
+    await waitForClick();
+    hidePopup();
+    await delay(randomNumber(900, 1200));
+
     const outcome = pickWeightedOutcome(minigame.outcomes, minigame.weights);
     bonusScore += outcome.score;
-    showGameplayPopup({
+    showPopup({
       kicker: minigame.kicker,
       title: `${minigame.name}: ${outcome.label}`,
       message: outcome.message,
       score: outcome.score
-    });
-    await delay(randomNumber(1100, 1700));
-    hideGameplayPopup();
-    await delay(180);
+    }, 10000, { clickToContinue: true });
+    await waitForClick();
+    hidePopup();
+    await delay(randomNumber(1000, 1400));
   }
 
   const npcEvent = npcEvents[randomNumber(0, npcEvents.length - 1)];
   bonusScore += npcEvent.score;
-  showGameplayPopup({
+  showPopup({
     kicker: npcEvent.kicker,
     title: npcEvent.title,
     message: npcEvent.message,
     score: npcEvent.score
-  });
-  await delay(randomNumber(1300, 1900));
-  hideGameplayPopup();
+  }, 10000, { clickToContinue: true });
+  await waitForClick();
+  hidePopup();
+  await delay(randomNumber(1000, 1500));
 }
 
 function togglePlayAgainButton(shouldShow) {
@@ -793,7 +859,7 @@ function resetToNewMatch() {
   bonusScore = 0;
   overlayEl.classList.add("hidden");
   overlayEl.setAttribute("aria-hidden", "true");
-  hideGameplayPopup();
+  hidePopup();
   document.body.classList.remove("overlay-open");
   clearResultEffects();
   clearSelectedPartner();
@@ -902,3 +968,17 @@ updatePlayerCard();
 initializeAudio();
 renderPlaceholder();
 goToSlide(0);
+
+gameplayPopupCardEl.addEventListener("click", (event) => {
+  if (!popupInteractionEnabled || event.target === gameplayPopupCloseEl) {
+    return;
+  }
+
+  resolvePopupInteraction();
+});
+
+gameplayPopupCloseEl.addEventListener("click", (event) => {
+  event.stopPropagation();
+  hidePopup();
+  resolvePopupInteraction();
+});
