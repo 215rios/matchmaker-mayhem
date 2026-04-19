@@ -7,98 +7,184 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="app">
-    <header class="hero">
-      <p class="eyebrow">Wedding Match Simulator</p>
-      <h1>Matchmaker Mayhem</h1>
-      <p class="subtitle">Find love... or total chaos.</p>
-    </header>
-
-    <section class="panel instructions">
-      <h2>How to Play</h2>
-      <p>Create Person 1, pick what they want in a partner, choose Person 2's role, then select a partner and click <strong>Matchmake</strong> to reveal the wedding fate.</p>
-      <ul>
-        <li>Choose one role and one style for Person 1.</li>
-        <li>Select up to 2 personality traits for Person 1.</li>
-        <li>Select up to 2 desired traits for Person 2.</li>
-        <li>Pick a role for Person 2 to filter the available partners.</li>
-      </ul>
-    </section>
-
-    <div class="grid">
-      <section class="panel">
-        <h2>Person 1 Customization</h2>
-
-        <div class="field-group">
-          <h3>Role</h3>
-          <div class="choice-row" id="person1-role">
-            <label><input type="radio" name="person1-role" value="Bride" checked> Bride</label>
-            <label><input type="radio" name="person1-role" value="Groom"> Groom</label>
-          </div>
+  <div class="page-shell">
+    <main class="app">
+      <header class="hero card">
+        <div class="hero-copy">
+          <p class="eyebrow">Wedding Match Simulator</p>
+          <h1>Matchmaker Mayhem</h1>
+          <p class="subtitle">Build the vibe, pick the match, and let wedding fate decide between sparkles and scandal.</p>
         </div>
 
-        <div class="field-group">
-          <h3>Style</h3>
-          <div class="choice-grid" id="person1-style">
-            <label><input type="radio" name="person1-style" value="classic" checked> Classic</label>
-            <label><input type="radio" name="person1-style" value="modern"> Modern</label>
-            <label><input type="radio" name="person1-style" value="bold"> Bold</label>
-            <label><input type="radio" name="person1-style" value="elegant"> Elegant</label>
-          </div>
+        <div class="hero-actions">
+          <button id="music-toggle" class="ghost-button" type="button" aria-pressed="false">Play Music</button>
+          <p class="music-note">Soft wedding music begins only after you press play.</p>
         </div>
+      </header>
 
-        <div class="field-group">
-          <h3>Personality Traits <span>(choose up to 2)</span></h3>
-          <div class="choice-grid" id="person1-traits">
-            <label><input type="checkbox" name="person1-traits" value="romantic"> Romantic</label>
-            <label><input type="checkbox" name="person1-traits" value="adventurous"> Adventurous</label>
-            <label><input type="checkbox" name="person1-traits" value="shy"> Shy</label>
-            <label><input type="checkbox" name="person1-traits" value="dramatic"> Dramatic</label>
-            <label><input type="checkbox" name="person1-traits" value="organized"> Organized</label>
-            <label><input type="checkbox" name="person1-traits" value="spontaneous"> Spontaneous</label>
-          </div>
+      <section class="instructions card">
+        <div class="section-heading">
+          <p class="section-kicker">How It Works</p>
+          <h2>Create your pastel-perfect pairing</h2>
         </div>
-
-        <div class="field-group">
-          <h3>Desired Partner Traits <span>(choose up to 2)</span></h3>
-          <div class="choice-grid" id="desired-traits">
-            <label><input type="checkbox" name="desired-traits" value="romantic"> Romantic</label>
-            <label><input type="checkbox" name="desired-traits" value="adventurous"> Adventurous</label>
-            <label><input type="checkbox" name="desired-traits" value="shy"> Shy</label>
-            <label><input type="checkbox" name="desired-traits" value="dramatic"> Dramatic</label>
-            <label><input type="checkbox" name="desired-traits" value="organized"> Organized</label>
-            <label><input type="checkbox" name="desired-traits" value="spontaneous"> Spontaneous</label>
-          </div>
-        </div>
+        <p>Design Person 1, set their ideal traits, choose Person 2's role, then matchmake to reveal the score breakdown and wedding outcome.</p>
+        <ul class="instruction-list">
+          <li>Choose one role, one style, and one vibe emoji for Person 1.</li>
+          <li>Select up to 2 personality traits for Person 1.</li>
+          <li>Select up to 2 desired partner traits.</li>
+          <li>Pick a role for Person 2, then choose one character card.</li>
+        </ul>
       </section>
 
-      <section class="panel">
-        <h2>Choose Person 2</h2>
-
-        <div class="field-group">
-          <h3>Partner Role</h3>
-          <div class="choice-row" id="partner-role">
-            <label><input type="radio" name="partner-role" value="Bride" checked> Bride</label>
-            <label><input type="radio" name="partner-role" value="Groom"> Groom</label>
+      <div class="layout-grid">
+        <section class="panel card">
+          <div class="section-heading">
+            <p class="section-kicker">Person 1</p>
+            <h2>Customize your lead</h2>
           </div>
-        </div>
 
-        <div class="partner-header">
-          <p>Select one of the available matches:</p>
-          <button id="matchmake-btn" type="button">Matchmake</button>
-        </div>
+          <div class="player-card" id="player-card">
+            <div class="player-avatar" id="player-avatar" aria-hidden="true">💖</div>
+            <div class="player-card-copy">
+              <h3>Player Card</h3>
+              <p id="player-role-style">Bride • Classic style</p>
+              <div class="summary-row">
+                <span class="summary-label">Traits</span>
+                <div class="chips" id="player-trait-summary"></div>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Looking for</span>
+                <div class="chips" id="desired-trait-summary"></div>
+              </div>
+            </div>
+          </div>
 
-        <div id="partner-list" class="partner-list" aria-live="polite"></div>
-      </section>
-    </div>
+          <div class="field-group">
+            <h3>Role</h3>
+            <div class="choice-row" id="person1-role">
+              <label class="choice-card">
+                <input type="radio" name="person1-role" value="Bride" checked>
+                <span>Bride</span>
+              </label>
+              <label class="choice-card">
+                <input type="radio" name="person1-role" value="Groom">
+                <span>Groom</span>
+              </label>
+            </div>
+          </div>
 
-    <section class="panel result-panel">
-      <h2>Wedding Outcome</h2>
-      <div id="result" class="result empty">
-        <p>Your compatibility score and wedding story will appear here.</p>
+          <div class="field-group">
+            <h3>Style</h3>
+            <div class="choice-grid" id="person1-style">
+              <label class="choice-card"><input type="radio" name="person1-style" value="classic" checked><span>Classic</span></label>
+              <label class="choice-card"><input type="radio" name="person1-style" value="modern"><span>Modern</span></label>
+              <label class="choice-card"><input type="radio" name="person1-style" value="bold"><span>Bold</span></label>
+              <label class="choice-card"><input type="radio" name="person1-style" value="elegant"><span>Elegant</span></label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <h3>Vibe Emoji</h3>
+            <div class="choice-grid vibe-grid" id="player-vibe">
+              <label class="choice-card vibe-card"><input type="radio" name="player-vibe" value="💖" checked><span>💖 Hopeless Romantic</span></label>
+              <label class="choice-card vibe-card"><input type="radio" name="player-vibe" value="✨"><span>✨ Main Character</span></label>
+              <label class="choice-card vibe-card"><input type="radio" name="player-vibe" value="🌷"><span>🌷 Soft Soul</span></label>
+              <label class="choice-card vibe-card"><input type="radio" name="player-vibe" value="🔥"><span>🔥 Chaotic Charmer</span></label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <h3>Personality Traits <span>(choose up to 2)</span></h3>
+            <div class="choice-grid" id="person1-traits">
+              <label class="choice-card"><input type="checkbox" name="person1-traits" value="romantic"><span>Romantic</span></label>
+              <label class="choice-card"><input type="checkbox" name="person1-traits" value="adventurous"><span>Adventurous</span></label>
+              <label class="choice-card"><input type="checkbox" name="person1-traits" value="shy"><span>Shy</span></label>
+              <label class="choice-card"><input type="checkbox" name="person1-traits" value="dramatic"><span>Dramatic</span></label>
+              <label class="choice-card"><input type="checkbox" name="person1-traits" value="organized"><span>Organized</span></label>
+              <label class="choice-card"><input type="checkbox" name="person1-traits" value="spontaneous"><span>Spontaneous</span></label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <h3>Desired Partner Traits <span>(choose up to 2)</span></h3>
+            <div class="choice-grid" id="desired-traits">
+              <label class="choice-card"><input type="checkbox" name="desired-traits" value="romantic"><span>Romantic</span></label>
+              <label class="choice-card"><input type="checkbox" name="desired-traits" value="adventurous"><span>Adventurous</span></label>
+              <label class="choice-card"><input type="checkbox" name="desired-traits" value="shy"><span>Shy</span></label>
+              <label class="choice-card"><input type="checkbox" name="desired-traits" value="dramatic"><span>Dramatic</span></label>
+              <label class="choice-card"><input type="checkbox" name="desired-traits" value="organized"><span>Organized</span></label>
+              <label class="choice-card"><input type="checkbox" name="desired-traits" value="spontaneous"><span>Spontaneous</span></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel card">
+          <div class="section-heading">
+            <p class="section-kicker">Person 2</p>
+            <h2>Pick the partner card</h2>
+          </div>
+
+          <div class="field-group">
+            <h3>Partner Role</h3>
+            <div class="choice-row" id="partner-role">
+              <label class="choice-card">
+                <input type="radio" name="partner-role" value="Bride" checked>
+                <span>Bride</span>
+              </label>
+              <label class="choice-card">
+                <input type="radio" name="partner-role" value="Groom">
+                <span>Groom</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="partner-header">
+            <div>
+              <p class="section-kicker">Character Portraits</p>
+              <p class="partner-intro">Hover for the sparkle, select for the chemistry check.</p>
+            </div>
+            <button id="matchmake-btn" type="button">Matchmake</button>
+          </div>
+
+          <div id="partner-list" class="partner-list" aria-live="polite"></div>
+        </section>
       </div>
-    </section>
-  </main>
+
+      <section class="panel result-panel card">
+        <div class="section-heading">
+          <p class="section-kicker">Result</p>
+          <h2>Wedding outcome</h2>
+        </div>
+        <div id="result" class="result empty">
+          <p>Your compatibility score, chemistry notes, and wedding story will appear here.</p>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <p>Romantic Music for Weddings and Valentine’s Day | Love by Alex-Productions</p>
+        <p>Source: <a href="https://onsound.eu/" target="_blank" rel="noreferrer">https://onsound.eu/</a></p>
+        <p>Music promoted by <a href="https://www.chosic.com/free-music/all/" target="_blank" rel="noreferrer">https://www.chosic.com/free-music/all/</a></p>
+        <p>Licensed under Creative Commons CC BY 3.0</p>
+        <p><a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">https://creativecommons.org/licenses/by/3.0/</a></p>
+      </footer>
+    </main>
+  </div>
+
+  <div id="matchmaking-overlay" class="matchmaking-overlay hidden" aria-live="polite" aria-hidden="true">
+    <div class="matchmaking-card">
+      <div class="loading-hearts" aria-hidden="true">
+        <span>💘</span>
+        <span>✨</span>
+        <span>💐</span>
+      </div>
+      <h2>Matchmaking in progress...</h2>
+      <p id="matchmaking-message">Analyzing compatibility...</p>
+    </div>
+  </div>
+
+  <audio id="wedding-audio" preload="auto">
+    <source src="wedding_music.mp3" type="audio/mpeg">
+  </audio>
 
   <script src="script.js"></script>
 </body>
